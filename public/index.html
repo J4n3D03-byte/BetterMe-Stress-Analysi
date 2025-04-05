@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Estrés Académico con IA</title>
+    <style>
+        :root {
+            --color-primary: #1f2355;
+            --color-secondary: #8f8cd7;
+            --color-accent1: #bed4df;
+            --color-accent2: #ffd9cb;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Cinemática inicial */
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeOut 1.5s ease-in-out 3s forwards;
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+        
+        .intro-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--color-accent2);
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1.5s ease-in-out 0.5s forwards;
+        }
+        
+        .intro-subtitle {
+            font-size: 1.5rem;
+            color: var(--color-accent1);
+            opacity: 0;
+            animation: fadeIn 1.5s ease-in-out 1s forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            opacity: 0;
+            animation: fadeInMain 1s ease-in-out 3.5s forwards;
+        }
+        
+        @keyframes fadeInMain {
+            to { opacity: 1; }
+        }
+        
+        h1 {
+            color: var(--color-accent2);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        /* Tarjeta de sección */
+        .section-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: none;
+        }
+        
+        .section-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .section-title {
+            color: var(--color-accent1);
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .section-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        /* Estilos para preguntas */
+        .question {
+            margin-bottom: 1.5rem;
+        }
+        
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        /* Opciones de respuesta */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .option-item input {
+            margin-right: 10px;
+        }
+        
+        .option-item label {
+            color: white;
+        }
+        
+        /* Escalas */
+        .scale-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Barra de progreso */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            height: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent1), var(--color-accent2));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Botones */
+        .btn {
+            background: var(--color-accent2);
+            color: var(--color-primary);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .btn:hover {
+            background: var(--color-accent1);
+            transform: translateY(-2px);
+        }
+        
+        /* Resultados */
+        #results {
+            display: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border-left: 5px solid var(--color-accent1);
+        }
+        
+        .result-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .result-title {
+            color: var(--color-accent1);
+            border-bottom: 1px solid var(--color-accent1);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        /* Navegación */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        /* Nuevos estilos para resultados */
+        .stress-level-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        
+        .stress-level-indicator h3 {
+            color: var(--color-accent1);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stress-bar {
+            height: 10px;
+            border-radius: 5px;
+            transition: all 0.5s ease;
+        }
+        
+        .result-section ul {
+            padding-left: 20px;
+        }
+        
+        .result-section li {
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Spinner para carga */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cinemática inicial -->
+    <div id="intro-screen">
+        <h1 class="intro-title">Análisis de Estrés Académico</h1>
+        <p class="intro-subtitle">Un espacio para reflexionar sobre tu bienestar</p>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="container">
+        <h1>Identificación de Factores de Estrés</h1>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <form id="stressAssessment">
+            <!-- Sección 1: Datos Demográficos -->
+            <div class="section-card" id="section-demographic">
+                <h2 class="section-title">Datos Demográficos</h2>
+                <p class="section-description">Información básica para personalizar tu análisis</p>
+                
+                <div class="question">
+                    <label class="question-text">Edad:</label>
+                    <input type="number" id="age" name="age" min="10" max="30" required>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Género:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">-- Selecciona --</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                        <option value="Prefiero no decir">Prefiero no decir</option>
+                    </select>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Curso:</label>
+                    <input type="text" id="grade" name="grade" placeholder="Ej: 3° Medio B" required>
+                </div>
+            </div>
+            
+            <!-- Sección 2: Factores Académicos -->
+            <div class="section-card" id="section-academic">
+                <h2 class="section-title">Factores Académicos</h2>
+                <p class="section-description">Evaluación de aspectos relacionados con tu rendimiento académico</p>
+                
+                <div class="question">
+                    <label class="question-text">Carga Académica: ¿Cómo percibes tu carga académica?</label>
+                    <div class="scale-container">
+                        <input type="range" id="academic_load" name="academic_load" min="1" max="5" value="3" required>
+                        <div class="scale-labels">
+                            <span>1 (Muy baja)</span>
+                            <span>3</span>
+                            <span>5 (Muy alta)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Presión Académica: ¿Sientes mucha presión para obtener buenas notas?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="pressure_yes" name="academic_pressure" value="Sí" required>
+                            <label for="pressure_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="pressure_no" name="academic_pressure" value="No">
+                            <label for="pressure_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Dificultades Académicas: ¿Experimentas dificultades en alguna asignatura en particular?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="difficulties_yes" name="academic_difficulties" value="Sí" required>
+                            <label for="difficulties_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="text" id="difficult_subjects" name="difficult_subjects" placeholder="Especifica asignaturas" style="display:none; margin-left:25px;">
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="difficulties_no" name="academic_difficulties" value="No">
+                            <label for="difficulties_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Relación con Profesores: ¿Cómo describirías tu relación con tus profesores?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="teachers_excellent" name="teacher_relationship" value="Excelente" required>
+                            <label for="teachers_excellent">Excelente</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="teachers_good" name="teacher_relationship" value="Buena">
+                            <label for="teachers_good">Buena</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="teachers_regular" name="teacher_relationship" value="Regular">
+                            <label for="teachers_regular">Regular</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="teachers_bad" name="teacher_relationship" value="Mala">
+                            <label for="teachers_bad">Mala</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 3: Factores Sociales -->
+            <div class="section-card" id="section-social">
+                <h2 class="section-title">Factores Sociales</h2>
+                <p class="section-description">Aspectos relacionados con tus interacciones sociales</p>
+                
+                <div class="question">
+                    <label class="question-text">Relaciones con Compañeros: ¿Cómo son tus relaciones con tus compañeros?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="peers_excellent" name="peer_relationships" value="Excelente" required>
+                            <label for="peers_excellent">Excelente</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="peers_good" name="peer_relationships" value="Buena">
+                            <label for="peers_good">Buena</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="peers_regular" name="peer_relationships" value="Regular">
+                            <label for="peers_regular">Regular</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="peers_bad" name="peer_relationships" value="Mala">
+                            <label for="peers_bad">Mala</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Acoso Escolar (Bullying): ¿Has experimentado acoso escolar (bullying)?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="bullying_yes" name="bullying" value="Sí" required>
+                            <label for="bullying_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="bullying_no" name="bullying" value="No">
+                            <label for="bullying_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Redes Sociales: ¿Cuánto tiempo al día dedicas a las redes sociales?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="social_less1" name="social_media_time" value="Menos de 1 hora" required>
+                            <label for="social_less1">Menos de 1 hora</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="social_1to3" name="social_media_time" value="1-3 horas">
+                            <label for="social_1to3">1-3 horas</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="social_3to5" name="social_media_time" value="3-5 horas">
+                            <label for="social_3to5">3-5 horas</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="social_more5" name="social_media_time" value="Más de 5 horas">
+                            <label for="social_more5">Más de 5 horas</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Vida Social: ¿Consideras que tienes suficiente tiempo para actividades sociales fuera del colegio?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="social_yes" name="social_life" value="Sí" required>
+                            <label for="social_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="social_no" name="social_life" value="No">
+                            <label for="social_no">No</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 4: Factores Familiares -->
+            <div class="section-card" id="section-family">
+                <h2 class="section-title">Factores Familiares</h2>
+                <p class="section-description">Aspectos relacionados con tu entorno familiar</p>
+                
+                <div class="question">
+                    <label class="question-text">Relación con la Familia: ¿Cómo describirías tu relación con tu familia?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="family_excellent" name="family_relationship" value="Excelente" required>
+                            <label for="family_excellent">Excelente</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="family_good" name="family_relationship" value="Buena">
+                            <label for="family_good">Buena</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="family_regular" name="family_relationship" value="Regular">
+                            <label for="family_regular">Regular</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="family_bad" name="family_relationship" value="Mala">
+                            <label for="family_bad">Mala</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Apoyo Familiar: ¿Sientes que tu familia te apoya en tus estudios y actividades?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="support_yes" name="family_support" value="Sí" required>
+                            <label for="support_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="support_no" name="family_support" value="No">
+                            <label for="support_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Problemas Familiares: ¿Existen problemas familiares que te preocupen?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="problems_yes" name="family_problems" value="Sí" required>
+                            <label for="problems_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="problems_no" name="family_problems" value="No">
+                            <label for="problems_no">No</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 5: Factores Personales -->
+            <div class="section-card" id="section-personal">
+                <h2 class="section-title">Factores Personales</h2>
+                <p class="section-description">Aspectos individuales que pueden afectar tu bienestar</p>
+                
+                <div class="question">
+                    <label class="question-text">¿Qué síntomas físicos experimentas cuando te estresas?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_headache" name="physical_symptoms" value="Dolores de cabeza">
+                            <label for="symptom_headache">Dolores de cabeza</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_muscle" name="physical_symptoms" value="Tensión muscular">
+                            <label for="symptom_muscle">Tensión muscular</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_fatigue" name="physical_symptoms" value="Fatiga">
+                            <label for="symptom_fatigue">Fatiga</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_sleep" name="physical_symptoms" value="Problemas para dormir">
+                            <label for="symptom_sleep">Problemas para dormir</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_digestive" name="physical_symptoms" value="Problemas digestivos">
+                            <label for="symptom_digestive">Problemas digestivos</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_heart" name="physical_symptoms" value="Taquicardia">
+                            <label for="symptom_heart">Taquicardia</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_none_physical" name="physical_symptoms" value="Ninguno de estos">
+                            <label for="symptom_none_physical">Ninguno de estos</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">¿Qué síntomas emocionales experimentas cuando te estresas?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_anxiety" name="emotional_symptoms" value="Ansiedad">
+                            <label for="symptom_anxiety">Ansiedad</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_irritability" name="emotional_symptoms" value="Irritabilidad">
+                            <label for="symptom_irritability">Irritabilidad</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_sadness" name="emotional_symptoms" value="Tristeza">
+                            <label for="symptom_sadness">Tristeza</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_saturation" name="emotional_symptoms" value="Saturación">
+                            <label for="symptom_saturation">Saturación</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_concentration" name="emotional_symptoms" value="Falta de concentración">
+                            <label for="symptom_concentration">Falta de concentración</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_mood" name="emotional_symptoms" value="Cambios de humor">
+                            <label for="symptom_mood">Cambios de humor</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="symptom_none_emotional" name="emotional_symptoms" value="Ninguna de estas">
+                            <label for="symptom_none_emotional">Ninguna de estas</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Actividad Física: ¿Realizas actividad física regularmente?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="activity_yes" name="physical_activity" value="Sí" required>
+                            <label for="activity_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="activity_no" name="physical_activity" value="No">
+                            <label for="activity_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">Autoestima: ¿Cómo calificarías tu autoestima?</label>
+                    <div class="scale-container">
+                        <input type="range" id="self_esteem" name="self_esteem" min="1" max="5" value="3" required>
+                        <div class="scale-labels">
+                            <span>1 (Muy baja)</span>
+                            <span>3</span>
+                            <span>5 (Muy alta)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">¿Qué áreas de tu vida afectan a tu estrés?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_studies" name="stress_areas" value="Trabajo/Estudios">
+                            <label for="stress_studies">Trabajo/Estudios</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_finances" name="stress_areas" value="Finanzas">
+                            <label for="stress_finances">Finanzas</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_relationships" name="stress_areas" value="Relaciones">
+                            <label for="stress_relationships">Relaciones</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_family" name="stress_areas" value="Familia">
+                            <label for="stress_family">Familia</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_health" name="stress_areas" value="Salud">
+                            <label for="stress_health">Salud</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_uncertainty" name="stress_areas" value="Incertidumbre futura">
+                            <label for="stress_uncertainty">Incertidumbre futura</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_time" name="stress_areas" value="Gestión del tiempo">
+                            <label for="stress_time">Gestión del tiempo</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="checkbox" id="stress_expectations" name="stress_areas" value="Expectativas personales">
+                            <label for="stress_expectations">Expectativas personales</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 6: Recursos de Apoyo -->
+            <div class="section-card" id="section-support">
+                <h2 class="section-title">Recursos de Apoyo</h2>
+                <p class="section-description">Conociendo los recursos disponibles para ti</p>
+                
+                <div class="question">
+                    <label class="question-text">¿Conoces los recursos de apoyo disponibles en el colegio para estudiantes que necesitan ayuda?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="resources_yes" name="support_resources" value="Sí" required>
+                            <label for="resources_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="resources_no" name="support_resources" value="No">
+                            <label for="resources_no">No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <label class="question-text">¿Has utilizado alguno de estos recursos?</label>
+                    <div class="options-container">
+                        <div class="option-item">
+                            <input type="radio" id="used_yes" name="used_resources" value="Sí" required>
+                            <label for="used_yes">Sí</label>
+                        </div>
+                        <div class="option-item">
+                            <input type="text" id="which_resources" name="which_resources" placeholder="Especifica cuáles" style="display:none; margin-left:25px;">
+                        </div>
+                        <div class="option-item">
+                            <input type="radio" id="used_no" name="used_resources" value="No">
+                            <label for="used_no">No</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de navegación -->
+            <div class="nav-buttons">
+                <button type="button" class="btn" id="prevBtn" style="display:none;">← Anterior</button>
+                <button type="button" class="btn" id="nextBtn">Siguiente →</button>
+            </div>
+        </form>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Variables de estado
+        let currentSection = 0;
+        const sections = [
+            'section-demographic',
+            'section-academic',
+            'section-social',
+            'section-family',
+            'section-personal',
+            'section-support'
+        ];
+        
+        // Mostrar primera sección al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById(sections[0]).classList.add('active');
+            updateProgressBar();
+            
+            // Configurar eventos
+            document.getElementById('prevBtn').addEventListener('click', prevSection);
+            document.getElementById('nextBtn').addEventListener('click', nextSection);
+            
+            // Manejar preguntas condicionales
+            document.querySelectorAll('input[name="academic_difficulties"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const subjectInput = document.getElementById('difficult_subjects');
+                    subjectInput.style.display = this.value === 'Sí' && this.checked ? 'block' : 'none';
+                    if (this.value !== 'Sí' || !this.checked) {
+                        subjectInput.value = '';
+                    }
+                });
+            });
+            
+            document.querySelectorAll('input[name="used_resources"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const resourcesInput = document.getElementById('which_resources');
+                    resourcesInput.style.display = this.value === 'Sí' && this.checked ? 'block' : 'none';
+                    if (this.value !== 'Sí' || !this.checked) {
+                        resourcesInput.value = '';
+                    }
+                });
+            });
+            
+            // Manejar opción "Ninguno" en síntomas
+            document.getElementById('symptom_none_physical').addEventListener('change', function() {
+                if (this.checked) {
+                    document.querySelectorAll('input[name="physical_symptoms"]:not(#symptom_none_physical)').forEach(cb => {
+                        cb.checked = false;
+                    });
+                }
+            });
+            
+            document.querySelectorAll('input[name="physical_symptoms"]:not(#symptom_none_physical)').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.getElementById('symptom_none_physical').checked = false;
+                    }
+                });
+            });
+            
+            document.getElementById('symptom_none_emotional').addEventListener('change', function() {
+                if (this.checked) {
+                    document.querySelectorAll('input[name="emotional_symptoms"]:not(#symptom_none_emotional)').forEach(cb => {
+                        cb.checked = false;
+                    });
+                }
+            });
+            
+            document.querySelectorAll('input[name="emotional_symptoms"]:not(#symptom_none_emotional)').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.getElementById('symptom_none_emotional').checked = false;
+                    }
+                });
+            });
+        });
+        
+        // Navegar a la siguiente sección
+        function nextSection() {
+            if (validateCurrentSection()) {
+                document.getElementById(sections[currentSection]).classList.remove('active');
+                currentSection++;
+                
+                if (currentSection < sections.length) {
+                    document.getElementById(sections[currentSection]).classList.add('active');
+                    document.getElementById('prevBtn').style.display = 'inline-block';
+                    
+                    if (currentSection === sections.length - 1) {
+                        document.getElementById('nextBtn').textContent = 'Enviar →';
+                    }
+                    
+                    updateProgressBar();
+                } else {
+                    submitForm();
+                }
+            }
+        }
+        
+        // Navegar a la sección anterior
+        function prevSection() {
+            document.getElementById(sections[currentSection]).classList.remove('active');
+            currentSection--;
+            
+            document.getElementById(sections[currentSection]).classList.add('active');
+            document.getElementById('nextBtn').textContent = 'Siguiente →';
+            
+            if (currentSection === 0) {
+                document.getElementById('prevBtn').style.display = 'none';
+            }
+            
+            updateProgressBar();
+        }
+        
+        // Validar sección actual
+        function validateCurrentSection() {
+            const currentSectionElement = document.getElementById(sections[currentSection]);
+            const requiredInputs = currentSectionElement.querySelectorAll('[required]');
+            let isValid = true;
+            
+            for (const input of requiredInputs) {
+                if (!input.value) {
+                    isValid = false;
+                    input.style.borderColor = '#ff6b6b';
+                    input.addEventListener('input', function() {
+                        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    }, { once: true });
+                }
+            }
+            
+            if (!isValid) {
+                alert('Por favor completa todos los campos requeridos antes de continuar.');
+            }
+            
+            return isValid;
+        }
+        
+        // Actualizar barra de progreso
+        function updateProgressBar() {
+            const progress = (currentSection / (sections.length - 1)) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+        
+        // Enviar formulario
+        async function submitForm() {
+            // Mostrar animación de carga
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.innerHTML = '<span class="spinner"></span> Analizando...';
+            nextBtn.disabled = true;
+            
+            // Obtener todos los datos del formulario
+            const formData = new FormData(document.getElementById('stressAssessment'));
+            const responses = {};
+            
+            // Convertir FormData a objeto
+            for (const [key, value] of formData.entries()) {
+                // Manejar campos de checkbox (pueden tener múltiples valores)
+                if (responses[key]) {
+                    if (Array.isArray(responses[key])) {
+                        responses[key].push(value);
+                    } else {
+                        responses[key] = [responses[key], value];
+                    }
+                } else {
+                    responses[key] = value;
+                }
+            }
+            
+            try {
+                // Enviar datos al backend/API de IA
+                const analysis = await analyzeWithAI(responses);
+                showResults(analysis);
+            } catch (error) {
+                console.error("Error al analizar con IA:", error);
+                showError();
+            } finally {
+                nextBtn.disabled = false;
+            }
+        }
+        
+        // Función para conectar con el análisis de IA
+        async function analyzeWithAI(responses) {
+            try {
+                const response = await fetch('/api/analyze-stress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(responses)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error("Error al conectar con el servicio de IA:", error);
+                
+                // Si hay error en la conexión, usar análisis local como respaldo
+                console.log("Usando análisis local como respaldo...");
+                return simulateAIResponse(responses);
+            }
+        }
+        
+        // Función de simulación de IA (para cuando no tengas conexión con backend)
+        function simulateAIResponse(responses) {
+            // Análisis de síntomas físicos
+            const physicalSymptoms = Array.isArray(responses.physical_symptoms) ? 
+                responses.physical_symptoms : 
+                (responses.physical_symptoms ? [responses.physical_symptoms] : []);
+            
+            const hasPhysicalSymptoms = physicalSymptoms.length > 0 && 
+                                    !physicalSymptoms.includes("Ninguno de estos");
+            
+            // Análisis de síntomas emocionales
+            const emotionalSymptoms = Array.isArray(responses.emotional_symptoms) ? 
+                responses.emotional_symptoms : 
+                (responses.emotional_symptoms ? [responses.emotional_symptoms] : []);
+            
+            const hasEmotionalSymptoms = emotionalSymptoms.length > 0 && 
+                                        !emotionalSymptoms.includes("Ninguna de estas");
+            
+            // Determinar nivel de estrés (1-5)
+            let stressLevel = 3; // Valor medio por defecto
+            
+            // Factores que aumentan el estrés
+            if (responses.academic_load >= 4) stressLevel += 0.5;
+            if (responses.academic_pressure === "Sí") stressLevel += 0.5;
+            if (responses.teacher_relationship === "Regular" || responses.teacher_relationship === "Mala") stressLevel += 0.3;
+            if (responses.peer_relationships === "Regular" || responses.peer_relationships === "Mala") stressLevel += 0.3;
+            if (responses.family_relationship === "Regular" || responses.family_relationship === "Mala") stressLevel += 0.4;
+            if (responses.self_esteem <= 2) stressLevel += 0.5;
+            if (hasPhysicalSymptoms) stressLevel += 0.3;
+            if (hasEmotionalSymptoms) stressLevel += 0.5;
+            
+            // Factores que disminuyen el estrés
+            if (responses.physical_activity === "Sí") stressLevel -= 0.4;
+            if (responses.family_support === "Sí") stressLevel -= 0.3;
+            if (responses.self_esteem >= 4) stressLevel -= 0.3;
+            
+            // Asegurar que esté entre 1 y 5
+            stressLevel = Math.max(1, Math.min(5, Math.round(stressLevel)));
+            
+            // Generar recomendaciones basadas en el análisis
+            const recommendations = generateRecommendations(responses, stressLevel);
+            
+            return {
+                stressLevel,
+                mainStressFactors: identifyMainStressFactors(responses),
+                physicalSymptomsAnalysis: analyzePhysicalSymptoms(physicalSymptoms),
+                emotionalSymptomsAnalysis: analyzeEmotionalSymptoms(emotionalSymptoms),
+                recommendations,
+                resources: generateResources(responses)
+            };
+        }
+        
+        // Función para identificar los principales factores de estrés
+        function identifyMainStressFactors(responses) {
+            const factors = [];
+            
+            // Factores académicos
+            if (responses.academic_load >= 4) factors.push("Carga académica alta");
+            if (responses.academic_pressure === "Sí") factors.push("Presión por buenas notas");
+            if (responses.academic_difficulties === "Sí") {
+                factors.push(`Dificultades en ${responses.difficult_subjects || "alguna asignatura"}`);
+            }
+            
+            // Factores sociales
+            if (responses.peer_relationships === "Regular" || responses.peer_relationships === "Mala") {
+                factors.push("Relaciones con compañeros");
+            }
+            if (responses.bullying === "Sí") factors.push("Acoso escolar");
+            
+            // Factores familiares
+            if (responses.family_relationship === "Regular" || responses.family_relationship === "Mala") {
+                factors.push("Relación familiar");
+            }
+            if (responses.family_problems === "Sí") factors.push("Problemas familiares");
+            
+            // Factores personales
+            if (responses.self_esteem <= 2) factors.push("Autoestima baja");
+            if (responses.physical_activity === "No") factors.push("Falta de actividad física");
+            
+            // Áreas de estrés seleccionadas
+            if (responses.stress_areas) {
+                const areas = Array.isArray(responses.stress_areas) ? 
+                    responses.stress_areas : 
+                    [responses.stress_areas];
+                factors.push(...areas);
+            }
+            
+            // Eliminar duplicados
+            return [...new Set(factors)];
+        }
+        
+        // Función para analizar síntomas físicos
+        function analyzePhysicalSymptoms(symptoms) {
+            if (!symptoms || symptoms.includes("Ninguno de estos")) {
+                return "No reportaste síntomas físicos significativos de estrés.";
+            }
+            
+            const analysis = [];
+            
+            if (symptoms.includes("Dolores de cabeza")) {
+                analysis.push("Los dolores de cabeza pueden estar relacionados con tensión muscular o falta de descanso adecuado.");
+            }
+            
+            if (symptoms.includes("Tensión muscular")) {
+                analysis.push("La tensión muscular es una respuesta común al estrés prolongado. Ejercicios de estiramiento pueden ayudar.");
+            }
+            
+            if (symptoms.includes("Problemas para dormir")) {
+                analysis.push("Las alteraciones del sueño son un indicador importante de estrés. Considera establecer una rutina de sueño.");
+            }
+            
+            return analysis.length > 0 ? 
+                `Tus síntomas físicos (${symptoms.join(", ")}) sugieren: ${analysis.join(" ")}` :
+                `Reportaste estos síntomas físicos: ${symptoms.join(", ")}`;
+        }
+        
+        // Función para analizar síntomas emocionales
+        function analyzeEmotionalSymptoms(symptoms) {
+            if (!symptoms || symptoms.includes("Ninguna de estas")) {
+                return "No reportaste síntomas emocionales significativos de estrés.";
+            }
+            
+            const analysis = [];
+            
+            if (symptoms.includes("Ansiedad")) {
+                analysis.push("La ansiedad es una respuesta común al estrés. Técnicas de respiración pueden ser útiles.");
+            }
+            
+            if (symptoms.includes("Irritabilidad")) {
+                analysis.push("La irritabilidad puede indicar acumulación de estrés. Pausas regulares pueden ayudar a manejar esto.");
+            }
+            
+            if (symptoms.includes("Falta de concentración")) {
+                analysis.push("La dificultad para concentrarse suele relacionarse con sobrecarga mental. Priorizar tareas puede ser beneficioso.");
+            }
+            
+            return analysis.length > 0 ? 
+                `Tus síntomas emocionales (${symptoms.join(", ")}) indican: ${analysis.join(" ")}` :
+                `Reportaste estos síntomas emocionales: ${symptoms.join(", ")}`;
+        }
+        
+        // Función para generar recomendaciones personalizadas
+        function generateRecommendations(responses, stressLevel) {
+            const recs = [];
+            
+            // Recomendaciones generales basadas en nivel de estrés
+            if (stressLevel >= 4) {
+                recs.push("Tu nivel de estrés es alto. Sería beneficioso buscar apoyo profesional o hablar con alguien de confianza sobre lo que estás experimentando.");
+            } else if (stressLevel >= 3) {
+                recs.push("Tienes un nivel moderado de estrés. Implementar técnicas de manejo de estrés ahora puede prevenir que aumente.");
+            } else {
+                recs.push("Tu nivel de estrés es manejable. Sigue practicando hábitos saludables para mantenerlo bajo control.");
+            }
+            
+            // Recomendaciones académicas
+            if (responses.academic_load >= 4) {
+                recs.push("Considera hablar con tus profesores o coordinador académico sobre tu carga de trabajo. Prioriza tareas y divide proyectos grandes en pasos más pequeños.");
+            }
+            
+            if (responses.academic_difficulties === "Sí") {
+                recs.push(`Para las dificultades en ${responses.difficult_subjects || "ciertas asignaturas"}, busca grupos de estudio o tutorías. A veces, un enfoque diferente puede ayudar.`);
+            }
+            
+            // Recomendaciones sociales
+            if (responses.peer_relationships === "Regular" || responses.peer_relationships === "Mala") {
+                recs.push("Mejorar las relaciones con compañeros puede reducir el estrés. Intenta iniciar conversaciones informales o participar en actividades grupales.");
+            }
+            
+            if (responses.bullying === "Sí") {
+                recs.push("Si estás experimentando acoso escolar, es importante que lo reportes a un adulto de confianza o a las autoridades escolares. No tienes que enfrentar esto solo/a.");
+            }
+            
+            // Recomendaciones personales
+            if (responses.physical_activity === "No") {
+                recs.push("La actividad física regular (incluso caminar 20-30 minutos al día) puede ayudar significativamente a reducir los niveles de estrés.");
+            }
+            
+            if (responses.self_esteem <= 2) {
+                recs.push("Trabaja en tu autoestima reconociendo tus logros diarios, por pequeños que sean. Evita compararte con otros y concéntrate en tu propio progreso.");
+            }
+            
+            // Recomendaciones basadas en síntomas
+            const physicalSymptoms = Array.isArray(responses.physical_symptoms) ? 
+                responses.physical_symptoms : 
+                (responses.physical_symptoms ? [responses.physical_symptoms] : []);
+            
+            if (physicalSymptoms.includes("Problemas para dormir")) {
+                recs.push("Para mejorar el sueño: establece un horario regular, evita pantallas 1 hora antes de dormir y crea un ambiente tranquilo en tu habitación.");
+            }
+            
+            const emotionalSymptoms = Array.isArray(responses.emotional_symptoms) ? 
+                responses.emotional_symptoms : 
+                (responses.emotional_symptoms ? [responses.emotional_symptoms] : []);
+            
+            if (emotionalSymptoms.includes("Ansiedad")) {
+                recs.push("Para manejar la ansiedad: practica la respiración profunda (inhala 4 segundos, mantén 4 segundos, exhala 6 segundos), identifica pensamientos negativos y cuestiona su validez.");
+            }
+            
+            return recs;
+        }
+        
+        // Función para generar recursos relevantes
+        function generateResources(responses) {
+            const resources = [
+                "Apps de meditación: Headspace, Calm o Insight Timer",
+                "Técnicas de estudio: Método Pomodoro (25 minutos de estudio, 5 minutos de descanso)",
+                "Ejercicios de respiración para manejar el estrés en el momento"
+            ];
+            
+            if (responses.physical_activity === "No") {
+                resources.push("Rutinas de ejercicio en casa: Canales de YouTube como 'Fitness Blender' o 'Yoga con Adriene'");
+            }
+            
+            if (responses.self_esteem <= 2) {
+                resources.push("Libro recomendado: 'El Poder de la Autoestima' de Nathaniel Branden");
+            }
+            
+            if (responses.support_resources === "No") {
+                resources.push("Consulta en tu institución sobre los recursos de apoyo psicológico o académico disponibles");
+            }
+            
+            return resources;
+        }
+        
+        // Función para mostrar resultados
+        function showResults(analysis) {
+            // Ocultar formulario
+            document.getElementById('stressAssessment').style.display = 'none';
+            
+            // Mostrar resultados
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            
+            // Crear HTML con los resultados del análisis
+            let resultsHTML = `
+                <div class="result-section">
+                    <h2 class="result-title">Análisis Personalizado de Estrés</h2>
+                    <p>Basado en tus respuestas, este es tu informe personalizado:</p>
+                    
+                    <div class="stress-level-indicator">
+                        <h3>Nivel de estrés: ${'★'.repeat(analysis.stressLevel)}${'☆'.repeat(5 - analysis.stressLevel)} (${analysis.stressLevel}/5)</h3>
+                        <div class="scale-container">
+                            <div class="stress-bar" style="width: ${analysis.stressLevel * 20}%; background-color: ${
+                                analysis.stressLevel >= 4 ? '#ff6b6b' : 
+                                analysis.stressLevel >= 3 ? '#ffd166' : '#06d6a0'
+                            };"></div>
+                        </div>
+                        <p>${
+                            analysis.stressLevel >= 4 ? 'Tu nivel de estrés es alto. Es importante tomar medidas para manejarlo.' :
+                            analysis.stressLevel >= 3 ? 'Tienes un nivel moderado de estrés. Algunas estrategias pueden ayudarte a mejorarlo.' :
+                            'Tu nivel de estrés es manejable. Sigue practicando buenos hábitos.'
+                        }</p>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <h3 class="result-title">🔍 Factores de Estrés Identificados</h3>
+                    <p>Tus principales fuentes de estrés parecen ser:</p>
+                    <ul>
+                        ${analysis.mainStressFactors.map(factor => `<li>${factor}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="result-section">
+                    <h3 class="result-title">💊 Síntomas Físicos</h3>
+                    <p>${analysis.physicalSymptomsAnalysis}</p>
+                </div>
+                
+                <div class="result-section">
+                    <h3 class="result-title">🧠 Síntomas Emocionales</h3>
+                    <p>${analysis.emotionalSymptomsAnalysis}</p>
+                </div>
+                
+                <div class="result-section">
+                    <h3 class="result-title">💡 Recomendaciones Personalizadas</h3>
+                    <p>Basado en tu perfil, te sugerimos:</p>
+                    <ul>
+                        ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="result-section">
+                    <h3 class="result-title">🛠️ Recursos Adicionales</h3>
+                    <p>Puedes explorar estos recursos:</p>
+                    <ul>
+                        ${analysis.resources.map(res => `<li>${res}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <button class="btn" onclick="window.location.reload()">Realizar otro análisis</button>
+            `;
+            
+            resultsDiv.innerHTML = resultsHTML;
+            
+            // Desplazarse suavemente a los resultados
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Función para mostrar error
+        function showError() {
+            document.getElementById('stressAssessment').style.display = 'none';
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = `
+                <div class="result-section">
+                    <h2 class="result-title">Error en el análisis</h2>
+                    <p>Lo sentimos, hubo un problema al analizar tus respuestas. Por favor intenta nuevamente más tarde.</p>
+                    <button class="btn" onclick="window.location.reload()">Volver a intentar</button>
+                </div>
+            `;
+            
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
